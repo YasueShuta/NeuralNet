@@ -2,8 +2,8 @@ CC = gcc
 CXX = g++
 
 OBJS = main.o
-CFLAGS += -std=c++11 `pkg-config --cflags opencv` -I ../eigen
-LIBS += -O2 `pkg-config --libs opencv` 
+CFLAGS += -std=c++11 `pkg-config --cflags opencv`
+LIBS += -O2 ../gnuplot/mylib_gnuplot.so `pkg-config --libs opencv`
 
 TARGET = NeuralNet_main
 

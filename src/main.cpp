@@ -4,11 +4,14 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <Eigen/Core>
+#include "../eigen/Eigen/Core"
+#include "../gnuplot/Gnuplot.h"
+
 //#define _USE_MATH_DEFINES
 #include <math.h>
 
 using namespace Eigen;
+using namespace Gnuplot;
 using namespace std;
 
 typedef Matrix<double, -1, -1, RowMajor> Mat;
@@ -27,9 +30,9 @@ int main(int argc, char* argv[]){
   static int SIZE_Y = 10;
   static int Image_Num = 5;
   
-  static int Neutral_Num = 20;
+  static int Neutral_Num = 30;
   
-  static int Train_Num = 100;
+  static int Train_Num = 10000;
   static double converge = 0.01;
 
   static double eta = 0.1;
@@ -90,7 +93,7 @@ int main(int argc, char* argv[]){
     string str;
     
     for(int i = 0;i<Image_Num;i++){
-      str = "../image/sample" + std::to_string(i+1) + ".jpg";
+      str = "../image/im" + std::to_string(i+1) + ".png";
       src = cvLoadImage(str.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
       
       if(src == NULL) return -1;
@@ -145,13 +148,13 @@ int main(int argc, char* argv[]){
 
   //Training
   ofs << "[Training]" << endl;
-  double E_RMS;
+  double E_RMS=1;
   VectorXd delta2 = x2;
   VectorXd delta3 = x3;
   {
     int count=0;
     int image_id;
-    while(count < Train_Num){
+    while(count < Train_Num && E_RMS > converge){
       E_RMS = 0;
       for(image_id=0; image_id < Image_Num; image_id++){
 	//(1)initialize x1, ts
@@ -236,6 +239,10 @@ int main(int argc, char* argv[]){
   }
 
   ofs.close();
+
+  GP* fig1 = new GP(true);
+  fig1->plotFunc("sin(x)");
+
   return 0;
 }
 
