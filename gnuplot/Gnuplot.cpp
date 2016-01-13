@@ -269,6 +269,23 @@ void GP::inputVec2Multi(double* xdata_, int len_, double* ydataarray_[], int ynu
 	}
 }
 
+void GP::plotFile(std::string filename_,
+		  std::string using_,
+		  std::string mode_,
+		  std::string option_,
+		  std::string title_){
+  std::string str;
+  str = "plot '" + filename_ + "'";
+  if(using_.length()){ str += " using " + using_; }
+  if(mode_ == ""){ mode_ = "lines";}
+  str += " with " + mode_;
+  if(title_ == ""){ str += " notitle"; }
+  else{ str += " title '" + title_ + "'"; }
+  if(option_.length()){
+    str += " " + option_;
+  }
+  h->write(str.c_str()); 
+}
 
 void GP::save(std::string filename_, std::string option_) {
 	std::string arg;
@@ -279,7 +296,7 @@ void GP::save(std::string filename_, std::string option_) {
 	arg = "set output '" + filename_ + "'";
 	h->write(arg);
 	replot();
-	h->write("set terminal windows");
+	h->write("set terminal wxt");
 	h->write("set output");
 }
 void GP::replot() {
