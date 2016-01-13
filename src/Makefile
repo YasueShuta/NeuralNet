@@ -9,6 +9,7 @@ TARGET = NeuralNet_main
 
 $(TARGET): $(OBJS)
 	$(CXX) -o $@ $^ $(LIBS)
+	$(RM) $^
 
 .cpp.o:
 	$(CXX) -c $(CFLAGS) $<

@@ -135,7 +135,7 @@ int main(int argc, char* argv[]){
   }
 
   //Record
-  ofstream ofs("record.txt");
+  ofstream ofs("../record/record.txt");
   ofs << "Assignment 1." << endl;
   ofs << "No. Neutral Neuron: " << Neutral_Num << endl;
   ofs << "Learning Rate:      " << eta << endl;
@@ -145,6 +145,8 @@ int main(int argc, char* argv[]){
   ofs << "Image Size        : " << SIZE_X << ", " << SIZE_Y << endl;
   ofs << "Image Num         : " << Image_Num << endl;
   ofs << endl;
+  ofstream rec, rec_train;
+  GP *rec_fig = new GP(false, "wxt", "Record", "Times New Roman");
 
   //Training
   ofs << "[Training]" << endl;
@@ -152,6 +154,8 @@ int main(int argc, char* argv[]){
   VectorXd delta2 = x2;
   VectorXd delta3 = x3;
   {
+    rec_train.open("../record/rec_train.dat");
+
     int count=0;
     int image_id;
     while(count < Train_Num && E_RMS > converge){
@@ -189,14 +193,23 @@ int main(int argc, char* argv[]){
       E_RMS = sqrt(E_RMS) / (double)(Image_Num*Image_Num);
       cout << "(i: " << count << ") E_RMS: " << E_RMS << endl;
       ofs << "(i: " << count << ")\tE_RMS: " << E_RMS << endl;
+      rec_train << count << " " << E_RMS << endl;
+
       count++;
     }
+    rec_train.close();
+    rec_fig->hwrite("set xlabel 'count of training' font 'Times New Roman,20'");
+    rec_fig->hwrite("set ylabel 'E_RMS' font 'Times New Roman,20'");
+    rec_fig->plotFile("../record/rec_train.dat", "",  "lines", "lw 3 lc 'blue'");
+    rec_fig->save("../record/rec_train.png", "png");
   }
+
 
   //Test
   double result=0;
   ofs << "[Test]" << endl;
   {
+    string rec_file;
     E_RMS = 0;
     for(int image_id=0; image_id<Image_Num; image_id++) {
 
@@ -219,6 +232,20 @@ int main(int argc, char* argv[]){
 	cout << r3.transpose() << endl;
 	ofs << image_id << ": Output: " << endl;
 	ofs << r3.transpose() << endl;
+	rec_file = "../record/rec_test" + to_string(image_id) + ".dat";
+	rec.open(rec_file.c_str());
+	for(int i=0;i<Image_Num;i++){
+	  rec << "Image" << i << " " << r3(i) << endl;
+	}
+	rec.close();
+
+	rec_fig->hwrite("set xlabel");
+	rec_fig->hwrite("set ylabel 'readout'");
+	rec_fig->hwrite("set title 'recognize " + to_string(image_id) + "'");
+	rec_fig->hwrite("set style fill solid border lc rgb 'black'");
+	rec_fig->plotFile(rec_file.c_str(), "0:2:xtic(1)", "boxes", "lc rgb 'cyan'");
+	rec_file = "../record/rec_test" + to_string(image_id) + ".png";
+	rec_fig->save(rec_file, "png");
 
 	for(int i=0;i<r3.rows();i++){
 	  if(r3(output) < r3(i))
@@ -237,11 +264,7 @@ int main(int argc, char* argv[]){
     cout << "Collect " << round(100*result) << " %" << endl;
     ofs << "Collect " << round(100*result) << " %" << endl;
   }
-
   ofs.close();
-
-  GP* fig1 = new GP(true);
-  fig1->plotFunc("sin(x)");
 
   return 0;
 }
