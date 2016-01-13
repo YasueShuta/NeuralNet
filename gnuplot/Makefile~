@@ -1,0 +1,9 @@
+TARGET = mylib_gnuplot.so
+
+${TARGET}: Gnuplot.o
+	g++ -O2 -shared -fPIC -std=c++11 -o $@ $^
+
+.cpp.o:
+	g++ -c $@ $<
+
+all: ${TARGET}
