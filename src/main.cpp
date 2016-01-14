@@ -199,12 +199,13 @@ int main(int argc, char* argv[]){
     int count=0;
     int image_id;
     int sample_id;
-    int print_every=100;
+    int print_every=10;
     double conv_d = 1.0;
     double conv = 1.0;
     bool isRecMode = false;
     string rec_file;
     char buf[30];
+    double p;
 
     while(count < Train_Num && E_RMS > converge){
       if(E_RMS <= conv) {
@@ -214,8 +215,8 @@ int main(int argc, char* argv[]){
 	  }
 	  conv -= conv_d;
 	}
-	isRecMode = true;
-	cout << "[Rec Mode] " << E_RMS << "|" << conv+conv_d << endl;
+	isRecMode = true; p = 0;
+	cout << "[Rec Mode] " << E_RMS << "|" << conv+conv_d;
       }
     
       E_RMS = 0;
@@ -225,12 +226,15 @@ int main(int argc, char* argv[]){
 	  for(int i=0; i<x1.size(); i++){
 	    //Add Noise
 	    {
-	      random_device rd;
-	      mt19937 mt(rd());
-	      uniform_real_distribution<double> d(0.0,1.0);
-
-	      if(trainNoise && d(mt) <= trainNoise) {
-		x1(i) = d(mt);
+	      if(trainNoise) {
+		random_device rd;
+		mt19937 mt(rd());
+		uniform_real_distribution<double> d(0.0,1.0);
+		if(d(mt) <= trainNoise){
+		  x1(i) = d(mt);
+		} else {
+		  x1(i) = image_data.at(sample_id * Image_Num + image_id)(i);
+		}
 	      } else {
 		x1(i) = image_data.at(sample_id * Image_Num + image_id)(i);
 	      }
@@ -252,20 +256,7 @@ int main(int argc, char* argv[]){
 	  }
 	  //(2')record output
 	  if(isRecMode){
-	    sprintf(buf, "../record/rec_test%d-%04d", image_id, (int)round(1000*(conv+conv_d)));
-	    rec_file = buf;
-	    rec.open(rec_file+".dat");
-	    for(int i=0;i<Image_Num;i++){
-	      rec << "Image" << i << " " << r3(i) << endl;
-	    }
-	    rec.close();
-
-	    rec_fig->hwrite("set xlabel");
-	    rec_fig->hwrite("set ylabel 'readout'");
-	    rec_fig->hwrite("set title 'recognize " + to_string(image_id) + " at " + to_string(conv+conv_d) + "'");
-	    rec_fig->hwrite("set style fill solid border lc rgb 'black'");
-	    rec_fig->plotFile(rec_file+".dat", "0:2:xtic(1)", "boxes", "lc rgb 'cyan'");
-	    rec_fig->save(rec_file+".png", "png");
+	    if(output == image_id) p+=1;
 	  }
 	  
 	  //(3)back propagation
@@ -278,9 +269,15 @@ int main(int argc, char* argv[]){
 	  //(4)calculate error evaluator
 	  E_RMS += (err.transpose()*err)(0);
 	}
-	if(isRecMode) isRecMode = false;
       }
       E_RMS = sqrt(E_RMS) / (double)(Image_Num*Image_Num*Image_Sample_Num);
+
+      if(isRecMode){
+	p = 100*p/(double)(Image_Num*Image_Sample_Num);
+	cout << "\tP: " << p << " %" << endl;
+	p = 0;
+	isRecMode = false;
+      }
 
       //(5)output E_RMS and count
       if(count % print_every == 0){
@@ -349,21 +346,21 @@ int main(int argc, char* argv[]){
 	  r3 = sigmoid(x3);
 	  output = 0;
 	  
-	  //(4)judge output
+	  //(3)judge output
 	  for(int i=0;i<r3.rows();i++){
 	    if(r3(output) < r3(i))
 	      output = i;
 	  }
 	  if(output == image_id) result.at(image_id)+=1;
 
-	  //(5)calculate error evaluator
+	  //(4)calculate error evaluator
 	  err = r3 - ts;
 	  E_RMS += (err.transpose()*err)(0);
 	}
       }
 
     
-      //(6)record result
+      //(5)record result
       E_RMS = sqrt(E_RMS)/(double)(Image_Num*Image_Num);
       cout << "E_RMS: " << E_RMS << endl;
       rec_main << "E_RMS: " << E_RMS << endl;
@@ -377,10 +374,10 @@ int main(int argc, char* argv[]){
 	cout << i << ":" << p << endl; 
 	rec_main << i << ":" << p << endl;      
 	rec << "Image" << i << " " << p << endl;
-	total += result.at(i+1);
+	total += result.at(i);
       }
 
-      totals.push_back(round(100 * result.at(0)/(double)(Image_Sample_Num * Image_Num)));
+      totals.push_back(round(100 * total/(double)(Image_Sample_Num * Image_Num)));
 
       cout << "Total: " << totals.at(totals.size()-1) << " %" << endl;
       rec_main << "Total: " << totals.at(totals.size()-1) << " %" << endl;
@@ -393,7 +390,7 @@ int main(int argc, char* argv[]){
       sprintf(buf, "set title 'Test: %02d%% Noise'", (int)round(100*testNoise));
       rec_fig->hwrite(buf);
       rec_fig->hwrite("set style fill solid border lc rgb 'cyan'");
-      rec_fig->plotFile(rec_file + ".dat", "boxes", "0:2:xtic(1)", "notitle", "");
+      rec_fig->plotFile(rec_file + ".dat", "0:2:xtic(1)", "boxes", "", "");
       rec_fig->save(rec_file + ".dat");   
     }
     //Record Result
@@ -407,7 +404,7 @@ int main(int argc, char* argv[]){
     rec_fig->hwrite("set xlabel 'Noise Rate [%]'");
     rec_fig->hwrite("set ylabel 'Percent of Correct [%}'");
     rec_fig->hwrite("set title 'Noise Test'");
-    rec_fig->plotFile(rec_file + ".dat", "lines", "lw 3 lc 'red'", "notitle", "");
+    rec_fig->plotFile(rec_file + ".dat", "", "lines", "lw 3 lc 'red'", "");
     rec_fig->save(rec_file + ".png");
   }
   rec_main.close();
