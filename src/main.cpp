@@ -185,7 +185,7 @@ int main(int argc, char* argv[]){
   rec_main << "Image Num         : " << Image_Num << endl;
   rec_main << "Sample Num        : " << Image_Sample_Num << endl;
   rec_main << endl;
-  ofstream rec, rec_train;
+  ofstream ofs, ofs_train;
   GP *rec_fig = new GP(false, "wxt", "Record", "Times New Roman");
   
   //Training
@@ -194,7 +194,7 @@ int main(int argc, char* argv[]){
   VectorXd delta2 = x2;
   VectorXd delta3 = x3;
   {
-    rec_train.open("../record/rec_train.dat");
+    ofs_train.open("../record/rec_train.dat");
 
     int count=0;
     int image_id;
@@ -282,15 +282,15 @@ int main(int argc, char* argv[]){
       //(5)output E_RMS and count
       if(count % print_every == 0){
 	cout << "(i: " << count << ") E_RMS: " << E_RMS << endl;
-	rec_train << count << " " << E_RMS << endl;
+	ofs_train << count << " " << E_RMS << endl;
       }
       count++;
     }
    
     //(6)record results
     cout << "(i: " << count << ") E_RMS: " << E_RMS << "\t(Training Finished)" << endl;
-    rec_train << count << " " << E_RMS << endl;
-    rec_train.close();
+    ofs_train << count << " " << E_RMS << endl;
+    ofs_train.close();
 
     rec_fig->hwrite("set xlabel 'count of training' font 'Times New Roman,20'");
     rec_fig->hwrite("set ylabel 'E_RMS' font 'Times New Roman,20'");
@@ -303,15 +303,13 @@ int main(int argc, char* argv[]){
   std::vector<double> totals;
   rec_main << "[Test]" << endl;
   {
+    ofstream ofs_test;
     string rec_file;
     char buf[30];
     double testNoise = 0.0;
     for(testNoise = 0; testNoise < NoiseRateMax; testNoise += 0.05){
       cout << "Noise Rate: " << 100*testNoise << " %" << endl;
       rec_main << "Noise Rate: " << 100*testNoise << " %" << endl;
-      sprintf(buf,  "../record/rec_test%02d", (int)(100*testNoise));
-      rec_file = buf;
-      rec.open(rec_file + ".dat");
 
       E_RMS = 0;
       for(int i=0;i<result.size();i++){
@@ -358,7 +356,6 @@ int main(int argc, char* argv[]){
 	  E_RMS += (err.transpose()*err)(0);
 	}
       }
-
     
       //(5)record result
       E_RMS = sqrt(E_RMS)/(double)(Image_Num*Image_Num);
@@ -367,13 +364,18 @@ int main(int argc, char* argv[]){
 
       cout << "Correct :" << endl;
       rec_main << "Correct :" << endl;
+
+      sprintf(buf,  "../record/rec_test%02d", (int)(100*testNoise));
+      rec_file = buf;
+      ofs_test.open(rec_file + ".dat");
+
       double p;
       int total = 0;
       for(int i=0; i<Image_Num; i++){
 	p = round(100*result.at(i)/(double)Image_Sample_Num);
 	cout << i << ":" << p << endl; 
 	rec_main << i << ":" << p << endl;      
-	rec << "Image" << i << " " << p << endl;
+	ofs_test << "Image" << i << " " << p << endl;
 	total += result.at(i);
       }
 
@@ -381,31 +383,31 @@ int main(int argc, char* argv[]){
 
       cout << "Total: " << totals.at(totals.size()-1) << " %" << endl;
       rec_main << "Total: " << totals.at(totals.size()-1) << " %" << endl;
-      rec << endl << "Total " << totals.at(totals.size()-1) << endl;
-      rec.close();
+      ofs_test << "Total " << totals.at(totals.size()-1) << endl;
+      ofs_test.close();
 
       //draw graph
       rec_fig->hwrite("set xlabel");
       rec_fig->hwrite("set ylabel 'Percent of Correct [%]'");
       sprintf(buf, "set title 'Test: %02d%% Noise'", (int)round(100*testNoise));
       rec_fig->hwrite(buf);
-      rec_fig->hwrite("set style fill solid border lc rgb 'cyan'");
-      rec_fig->plotFile(rec_file + ".dat", "0:2:xtic(1)", "boxes", "", "");
-      rec_fig->save(rec_file + ".dat");   
+      rec_fig->hwrite("set style fill solid border lc rgb 'black'");
+      rec_fig->plotFile(rec_file + ".dat", "0:2:xtic(1)", "boxes", "lc rgb 'cyan'", "");
+      rec_fig->save(rec_file + ".png", "png");   
     }
     //Record Result
     rec_file = "../record/rec_test-total";
-    rec.open(rec_file + ".dat");
+    ofs.open(rec_file + ".dat");
     for(int i=0;i<totals.size();i++){
-      rec << i*5 << " " << totals.at(i) << endl;
+      ofs << i*5 << " " << totals.at(i) << endl;
     }
-    rec.close();
+    ofs.close();
 
     rec_fig->hwrite("set xlabel 'Noise Rate [%]'");
     rec_fig->hwrite("set ylabel 'Percent of Correct [%}'");
     rec_fig->hwrite("set title 'Noise Test'");
     rec_fig->plotFile(rec_file + ".dat", "", "lines", "lw 3 lc 'red'", "");
-    rec_fig->save(rec_file + ".png");
+    rec_fig->save(rec_file + ".png", "png");
   }
   rec_main.close();
 
