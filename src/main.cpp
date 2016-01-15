@@ -15,7 +15,7 @@ using namespace Eigen;
 using namespace Gnuplot;
 using namespace std;
 
-typedef Matrix<double, -1, -1, RowMajor> Mat;
+typedef Matrix<double, -1, -1, RowMajor> MyMat;
 
 
 double sigmoid(double x);
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]){
 	cout << "-v  no need to convert image" << endl;
 	cout << "-r  set max noise rate" << endl;
 	return 2;
-      case 'm':
+      case 'e':
 	s = argv[++i];
 	eta = stod(s);
 	break;
@@ -111,7 +111,7 @@ int main(int argc, char* argv[]){
   }
   
   /*  Create Image Data  */
-  vector<Mat> image_data = vector<Mat>(Image_Num*Image_Sample_Num);
+  vector<MyMat> image_data = vector<MyMat>(Image_Num*Image_Sample_Num);
   {  
     IplImage *src=0, *dst=0;
     string str_dir, str_file;
@@ -140,7 +140,7 @@ int main(int argc, char* argv[]){
 	}
 
 	index = j*Image_Num + i;
-	image_data.at(index) = Mat(SIZE_Y, SIZE_X);
+	image_data.at(index) = MyMat(SIZE_Y, SIZE_X);
 	for(int h=0; h < dst->height; h++){
 	  for(int w=0; w < dst->width; w++){
 	    image_data.at(index)(h, w) = (unsigned char)dst->imageData[h*dst->widthStep + w] / 256.0;
@@ -153,7 +153,7 @@ int main(int argc, char* argv[]){
   //Create network
   VectorXd x1, x2, x3;
   VectorXd r1, r2, r3;
-  Mat w12, w23;
+  MyMat w12, w23;
   int output;
   VectorXd ts, err;
   {
@@ -164,8 +164,8 @@ int main(int argc, char* argv[]){
     x3 = VectorXd::Zero(Image_Num);
     r3 = x3;
     
-    w12 = Mat::Random(x2.size(), x1.size());
-    w23 = Mat::Random(x3.size(), x2.size());
+    w12 = MyMat::Random(x2.size(), x1.size());
+    w23 = MyMat::Random(x3.size(), x2.size());
     
     output = 0;
     
@@ -191,7 +191,9 @@ int main(int argc, char* argv[]){
   rec_main << "Sample Num        : " << Image_Sample_Num << endl;
   rec_main << endl;
   ofstream ofs, ofs_train;
-  GP *rec_fig = new GP(false, "wxt", "Record", "Times New Roman");
+  cout << "fig" << endl;
+  GP *rec_fig = new GP(false, "wxt", "Record", "Times New Roman", 12);
+  rec_fig->setLog("gnuplot_log.plt");
   
   //Training
   rec_main << "[Training]" << endl;
