@@ -171,7 +171,12 @@ int main(int argc, char* argv[]){
     
     ts = VectorXd::Zero(Image_Num);
   }
-  
+
+  //Random Device
+  random_device rd;
+  mt19937 mt(rd());
+  uniform_real_distribution<double> d(0.0,1.0);
+
   //Record
   ofstream rec_main("../record/rec_main.txt");
   rec_main << "Assignment 2." << endl;
@@ -226,15 +231,8 @@ int main(int argc, char* argv[]){
 	  for(int i=0; i<x1.size(); i++){
 	    //Add Noise
 	    {
-	      if(trainNoise) {
-		random_device rd;
-		mt19937 mt(rd());
-		uniform_real_distribution<double> d(0.0,1.0);
-		if(d(mt) <= trainNoise){
-		  x1(i) = d(mt);
-		} else {
-		  x1(i) = image_data.at(sample_id * Image_Num + image_id)(i);
-		}
+	      if(trainNoise && d(mt) <= trainNoise){
+		x1(i) = d(mt);
 	      } else {
 		x1(i) = image_data.at(sample_id * Image_Num + image_id)(i);
 	      }
@@ -307,7 +305,7 @@ int main(int argc, char* argv[]){
     string rec_file;
     char buf[30];
     double testNoise = 0.0;
-    for(testNoise = 0; testNoise < NoiseRateMax; testNoise += 0.05){
+    for(testNoise = 0; testNoise <= NoiseRateMax; testNoise += 0.05){
       cout << "Noise Rate: " << 100*testNoise << " %" << endl;
       rec_main << "Noise Rate: " << 100*testNoise << " %" << endl;
 
@@ -322,10 +320,6 @@ int main(int argc, char* argv[]){
 	  for(int i=0; i<x1.size(); i++){
 	    //Add Noise
 	    {
-	      random_device rd;
-	      mt19937 mt(rd());
-	      uniform_real_distribution<double> d(0.0,1.0);
-
 	      if(testNoise && d(mt) <= testNoise) {
 		x1(i) = d(mt);
 	      } else {
@@ -383,7 +377,7 @@ int main(int argc, char* argv[]){
 
       cout << "Total: " << totals.at(totals.size()-1) << " %" << endl;
       rec_main << "Total: " << totals.at(totals.size()-1) << " %" << endl;
-      ofs_test << "Total " << totals.at(totals.size()-1) << endl;
+      ofs_test << "- 0" << endl << "Total " << totals.at(totals.size()-1) << endl;
       ofs_test.close();
 
       //draw graph
@@ -391,6 +385,7 @@ int main(int argc, char* argv[]){
       rec_fig->hwrite("set ylabel 'Percent of Correct [%]'");
       sprintf(buf, "set title 'Test: %02d%% Noise'", (int)round(100*testNoise));
       rec_fig->hwrite(buf);
+      rec_fig->hwrite("set yrange [0:100]");
       rec_fig->hwrite("set style fill solid border lc rgb 'black'");
       rec_fig->plotFile(rec_file + ".dat", "0:2:xtic(1)", "boxes", "lc rgb 'cyan'", "");
       rec_fig->save(rec_file + ".png", "png");   
