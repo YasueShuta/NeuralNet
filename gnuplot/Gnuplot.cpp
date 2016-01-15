@@ -55,6 +55,13 @@ void Handle::send()
 {
 	fputs(buf.str().c_str(), fp);
 	fflush(fp);
+	if(flog){
+	  fputs(buf.str().c_str(), flog);
+	  fflush(flog);
+	} else {
+	  log << buf.str();
+	}
+
 	resetBuf();
 }
 
@@ -66,6 +73,13 @@ void Handle::dispBuf()
 void Handle::resetBuf()
 {
 	buf.str("");
+}
+
+void Handle::setLog(std::string logname_)
+{
+  flog = fopen(logname_.c_str(), "w");
+  fputs(log.str().c_str(), flog);
+  fflush(flog);
 }
 
 Handle* Handle::findHandle(int id_) {

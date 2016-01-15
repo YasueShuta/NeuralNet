@@ -10,6 +10,8 @@ namespace Gnuplot {
 	{
 	private:
 		FILE* fp;
+		FILE* flog;
+		std::stringstream log;
 
 		void send();
 		void setId();
@@ -29,6 +31,7 @@ namespace Gnuplot {
 		void write(std::string s);
 		void dispBuf();
 		void resetBuf();
+		void setLog(std::string logname_);
 
 		static Handle* findHandle(int id_);
 	};
@@ -46,6 +49,7 @@ namespace Gnuplot {
 		int getId() { return h->id; }
 		void holdOn() {	isHold = true;}
 		void holdOff() { isHold = false; }
+		void setLog(std::string logname_) { h->setLog(logname_); }
 
 		//void plotFunc(std::string arg);
 		void plotFunc(std::string arg, int linewidth, int linecolor, std::string title_ = "");
@@ -75,8 +79,8 @@ namespace Gnuplot {
 		void inputVec2Multi(double* xdata_, int len_, double* ydataarray_[], int ynum_);
 
 		void plotFile(std::string filename_,
-			      std::string mode_,
 			      std::string using_,
+			      std::string mode_,
 			      std::string option_,
 			      std::string title_=""); 
 
