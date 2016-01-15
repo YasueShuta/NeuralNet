@@ -10,7 +10,7 @@ namespace Gnuplot {
 	{
 	private:
 		FILE* fp;
-		FILE* flog;
+		FILE* flog = NULL;
 		std::stringstream log;
 
 		void send();
@@ -97,7 +97,7 @@ namespace Gnuplot {
 		   std::string terminal_ = "wxt", //"windows",
 		   std::string title_ = "Figure",
 		   std::string font_ = "Times New Roman",
-		   double fontsize_ = 18,
+		   double fontsize_ = 12,
 		   int wsize_x_ = 640,
 		   int wsize_y_ = 330,
 		   int woffset_x_ = 30,
